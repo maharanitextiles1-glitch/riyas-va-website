@@ -1,0 +1,580 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="{{ seo.description }}" />
+  <meta name="robots" content="index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1" />
+  <link rel="canonical" href="{{ seo.canonical }}" />
+
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="{{ seo.title }}" />
+  <meta property="og:description" content="{{ seo.description }}" />
+  <meta property="og:url" content="{{ seo.canonical }}" />
+  <meta property="og:image" content="{{ seo.og_image }}" />
+  <meta property="og:site_name" content="Riyas V. A." />
+
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="{{ seo.title }}" />
+  <meta name="twitter:description" content="{{ seo.description }}" />
+  <meta name="twitter:image" content="{{ seo.og_image }}" />
+  <meta name="theme-color" content="#ffffff" />
+  <title>{{ seo.title }}</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:ital,wght@0,500;0,600;1,500&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}" />
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "Person",
+    "name": "Riyas V. A.",
+    "jobTitle": "Chairman & Managing Director",
+    "worksFor": {
+      "@type": "Organization",
+      "name": "Atlas–Maharani Group"
+    },
+    "url": "{{ seo.canonical }}",
+    "image": "{{ seo.og_image }}",
+    "address": {
+      "@type": "PostalAddress",
+      "addressLocality": "Thodupuzha",
+      "addressRegion": "Kerala",
+      "addressCountry": "IN"
+    }
+  }
+  </script>
+</head>
+
+<body>
+
+<header class="site-header">
+  <div class="container nav-wrap">
+    <a class="brand" href="#home">
+      <span class="brand-mark">RV</span>
+      <span class="brand-copy">
+        <strong>Riyas V. A.</strong>
+        <small>Chairman & Managing Director</small>
+      </span>
+    </a>
+
+    <button class="menu-toggle" aria-label="Toggle menu" aria-expanded="false">
+      <span></span>
+      <span></span>
+    </button>
+
+    <nav class="nav-links">
+      <a href="#about">About</a>
+      <a href="#family">Family</a>
+      <a href="#brands">Brands</a>
+      <a href="#journey">Journey</a>
+      <a href="#awards">Awards</a>
+      <a href="#media">Media</a>
+      <a class="nav-cta" href="#contact">Contact</a>
+    </nav>
+  </div>
+</header>
+
+<main>
+
+<section class="hero" id="home">
+  <div class="hero-grid-lines"></div>
+  <div class="hero-glow"></div>
+
+  <div class="container hero-grid">
+
+    <div class="hero-copy reveal">
+      <p class="eyebrow">Entrepreneur · Retail Leader · Visionary</p>
+
+      <h1>
+        Building businesses.
+        <em>Creating impact.</em>
+      </h1>
+
+      <p class="hero-lead">
+        Riyas V. A. is the Chairman & Managing Director of the Atlas–Maharani Group,
+        leading businesses with a focus on customer experience, people, innovation and long-term growth.
+      </p>
+
+      <div class="hero-actions">
+        <a href="#about" class="btn btn-dark">Explore his story</a>
+        <a href="#brands" class="btn btn-outline">Business portfolio</a>
+      </div>
+
+      <div class="hero-stats">
+        <div>
+          <strong>25</strong>
+          <span>shops across Kerala</span>
+        </div>
+        <div>
+          <strong>400+</strong>
+          <span>employees working across the group</span>
+        </div>
+        <div>
+          <strong>Kerala</strong>
+          <span>growing retail network</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="hero-visual reveal delay-1">
+      <div class="portrait-frame">
+        <img src="{{ photo_url('hero', 'assets/riyas-va.png') }}" alt="Riyas V. A." fetchpriority="high" decoding="async">
+      </div>
+
+      <div class="floating-card">
+        <span>Chairman & Managing Director</span>
+        <strong>Atlas–Maharani Group</strong>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<section class="section about-section about-overlay-section" id="about">
+  <div class="about-overlay-photo" aria-hidden="true">
+    <img src="{{ photo_url('about', 'assets/about-overlay-award.png') }}" alt="" loading="lazy" decoding="async">
+    <div class="about-overlay-gradient"></div>
+  </div>
+
+  <div class="container split-layout about-overlay-content">
+    <div class="section-index reveal">
+      <span>01</span>
+      <p>About</p>
+    </div>
+
+    <div class="section-content reveal delay-1">
+      <p class="eyebrow">Leadership beyond titles</p>
+
+      <h2>
+        A journey shaped by
+        <em>vision, discipline and people.</em>
+      </h2>
+
+      <p class="lead-copy">
+        Riyas V. A. leads the Atlas–Maharani Group with a customer-first approach and a strong focus on
+        building sustainable businesses, meaningful employment and memorable retail experiences.
+      </p>
+
+      <div class="two-column-copy">
+        <p>
+          His leadership style combines the discipline of modern retail with a deep understanding of Kerala’s
+          fashion, wedding and family-shopping market.
+        </p>
+
+        <p>
+          Beyond business growth, his approach places equal importance on team culture, customer trust,
+          employee recognition and community-oriented initiatives.
+        </p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section family-section" id="family">
+  <div class="container">
+
+    <div class="section-heading reveal">
+      <div>
+        <p class="eyebrow">Personal foundation</p>
+        <h2>Family, values & perspective.</h2>
+      </div>
+
+      <p class="section-description">
+        A more personal side of the journey, expressed with discretion while keeping private family
+        information away from the public profile.
+      </p>
+    </div>
+
+    <div class="family-feature reveal">
+
+      <div class="family-image family-image-clean">
+        <img src="{{ photo_url('family', 'assets/riyas-family.png') }}" alt="Riyas V. A. with family" loading="lazy" decoding="async">
+      </div>
+
+      <div class="family-copy">
+        <span class="mini-label">Beyond business</span>
+
+        <h3>
+          Strong businesses often begin with
+          <em>strong personal foundations.</em>
+        </h3>
+
+        <p>
+          For Riyas V. A., family represents balance, perspective and continuity. Away from the pace of business,
+          it is the space that keeps priorities clear, decisions grounded and success connected to responsibility.
+        </p>
+
+        <p>
+          The same values reflected in his leadership — respect, commitment, consistency and care for people —
+          are also central to the way he approaches life beyond work.
+        </p>
+
+        <div class="family-quote">
+          <span>Perspective</span>
+          <blockquote>
+            Success becomes meaningful when professional growth and personal responsibility move together.
+          </blockquote>
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+</section>
+
+<section class="section brands-section" id="brands">
+  <div class="container">
+    <div class="section-heading reveal">
+      <div>
+        <p class="eyebrow">Business portfolio</p>
+        <h2>Brands & ventures.</h2>
+      </div>
+      <p class="section-description">
+        Businesses and brands developed across fashion, retail, wedding shopping and lifestyle.
+      </p>
+    </div>
+  </div>
+
+  <div class="brand-ticker">
+    <div class="brand-track">
+
+      <article class="mini-brand-card brand-logo-card">
+        <div class="brand-logo-wrap">
+          <img src="{{ photo_url('brand_atless', 'assets/brands/atless-fashion.png') }}" alt="@less Fashion logo" loading="lazy" decoding="async">
+        </div>
+        <h3>@less Fashion</h3>
+      </article>
+
+      <article class="mini-brand-card brand-logo-card">
+        <div class="brand-logo-wrap">
+          <img src="{{ photo_url('brand_atlas', 'assets/brands/atlas-fashion.png') }}" alt="Atlas Fashion logo" loading="lazy" decoding="async">
+        </div>
+        <h3>Atlas Fashion</h3>
+      </article>
+
+      <article class="mini-brand-card brand-logo-card">
+        <div class="brand-logo-wrap">
+          <img src="{{ photo_url('brand_megamart', 'assets/brands/megamart.png') }}" alt="Megamart logo" loading="lazy" decoding="async">
+        </div>
+        <h3>Megamart</h3>
+      </article>
+
+      <article class="mini-brand-card brand-logo-card">
+        <div class="brand-logo-wrap">
+          <img src="{{ photo_url('brand_atless_go', 'assets/brands/atless-go.png') }}" alt="@less GO logo" loading="lazy" decoding="async">
+        </div>
+        <h3>@less GO</h3>
+      </article>
+
+      <article class="mini-brand-card brand-logo-card">
+        <div class="brand-logo-wrap">
+          <img src="{{ photo_url('brand_liza', 'assets/brands/liza-fashions.png') }}" alt="Liza Fashions logo" loading="lazy" decoding="async">
+        </div>
+        <h3>Liza Fashions</h3>
+      </article>
+
+      <article class="mini-brand-card brand-logo-card">
+        <div class="brand-logo-wrap">
+          <img src="{{ photo_url('brand_maharani', 'assets/brands/maharani-wedding-collections.png') }}" alt="Maharani Wedding Collections logo" loading="lazy" decoding="async">
+        </div>
+        <h3>Maharani Wedding Collections</h3>
+      </article>
+
+      <article class="mini-brand-card brand-logo-card" aria-hidden="true">
+        <div class="brand-logo-wrap">
+          <img src="{{ photo_url('brand_atless', 'assets/brands/atless-fashion.png') }}" alt="" loading="lazy" decoding="async">
+        </div>
+        <h3>@less Fashion</h3>
+      </article>
+
+      <article class="mini-brand-card brand-logo-card" aria-hidden="true">
+        <div class="brand-logo-wrap">
+          <img src="{{ photo_url('brand_atlas', 'assets/brands/atlas-fashion.png') }}" alt="" loading="lazy" decoding="async">
+        </div>
+        <h3>Atlas Fashion</h3>
+      </article>
+
+      <article class="mini-brand-card brand-logo-card" aria-hidden="true">
+        <div class="brand-logo-wrap">
+          <img src="{{ photo_url('brand_megamart', 'assets/brands/megamart.png') }}" alt="" loading="lazy" decoding="async">
+        </div>
+        <h3>Megamart</h3>
+      </article>
+
+      <article class="mini-brand-card brand-logo-card" aria-hidden="true">
+        <div class="brand-logo-wrap">
+          <img src="{{ photo_url('brand_atless_go', 'assets/brands/atless-go.png') }}" alt="" loading="lazy" decoding="async">
+        </div>
+        <h3>@less GO</h3>
+      </article>
+
+      <article class="mini-brand-card brand-logo-card" aria-hidden="true">
+        <div class="brand-logo-wrap">
+          <img src="{{ photo_url('brand_liza', 'assets/brands/liza-fashions.png') }}" alt="" loading="lazy" decoding="async">
+        </div>
+        <h3>Liza Fashions</h3>
+      </article>
+
+      <article class="mini-brand-card brand-logo-card" aria-hidden="true">
+        <div class="brand-logo-wrap">
+          <img src="{{ photo_url('brand_maharani', 'assets/brands/maharani-wedding-collections.png') }}" alt="" loading="lazy" decoding="async">
+        </div>
+        <h3>Maharani Wedding Collections</h3>
+      </article>
+
+    </div>
+  </div>
+
+  <div class="container">
+    <div class="brand-footer reveal">
+      <span>Portfolio</span>
+      <p>The business portfolio continues to grow across fashion, retail, lifestyle and wedding fashion.</p>
+    </div>
+  </div>
+</section>
+
+<section class="section journey-section" id="journey">
+  <div class="container">
+    <div class="section-heading reveal">
+      <div>
+        <p class="eyebrow">The journey</p>
+        <h2>Milestones that shaped the story.</h2>
+      </div>
+      <p class="section-description">
+        A business journey defined by expansion, new retail formats, brand building and a people-first operating culture.
+      </p>
+    </div>
+
+    <div class="timeline">
+      <article class="timeline-item reveal">
+        <span>01</span>
+        <div>
+          <small class="timeline-label">Foundation</small>
+          <h3>Building a customer-first retail vision</h3>
+          <p>The journey began with a clear ambition: create a fashion retail experience built on trust, accessibility, strong service and long-term customer relationships.</p>
+        </div>
+        <i>↗</i>
+      </article>
+
+      <article class="timeline-item reveal delay-1">
+        <span>02</span>
+        <div>
+          <small class="timeline-label">Maharani</small>
+          <h3>Developing a complete wedding destination</h3>
+          <p>Maharani Wedding Collections evolved into a comprehensive wedding-shopping destination, bringing bridal, groom, sarees, lehengas, gowns and family fashion under one brand experience.</p>
+        </div>
+        <i>↗</i>
+      </article>
+
+      <article class="timeline-item reveal delay-2">
+        <span>03</span>
+        <div>
+          <small class="timeline-label">Expansion</small>
+          <h3>Growing to 25 shops across Kerala</h3>
+          <p>The business portfolio expanded through multiple retail concepts and locations, creating a wider customer network and a stronger presence across Kerala.</p>
+        </div>
+        <i>↗</i>
+      </article>
+
+      <article class="timeline-item reveal delay-3">
+        <span>04</span>
+        <div>
+          <small class="timeline-label">Organization</small>
+          <h3>Building a 400+ member workforce</h3>
+          <p>Growth has been supported by a large and diverse team across retail, operations, marketing, management and customer service — turning scale into a people-led organization.</p>
+        </div>
+        <i>↗</i>
+      </article>
+
+      <article class="timeline-item reveal">
+        <span>05</span>
+        <div>
+          <small class="timeline-label">Portfolio</small>
+          <h3>Creating multiple fashion and retail brands</h3>
+          <p>The group’s expansion now spans distinct retail formats and brands, each designed for a different customer need while sharing the same operational foundation.</p>
+        </div>
+        <i>↗</i>
+      </article>
+
+      <article class="timeline-item reveal delay-1">
+        <span>06</span>
+        <div>
+          <small class="timeline-label">Recognition</small>
+          <h3>From business growth to industry recognition</h3>
+          <p>Awards, media recognition, major milestones and public initiatives have become part of a larger story of leadership, retail innovation and sustained brand growth.</p>
+        </div>
+        <i>↗</i>
+      </article>
+    </div>
+  </div>
+</section>
+
+<section class="section awards-section" id="awards">
+  <div class="container">
+    <div class="section-heading reveal">
+      <div>
+        <p class="eyebrow">Recognition</p>
+        <h2>Awards & achievements.</h2>
+      </div>
+      <p class="section-description">A curated showcase of recognitions, business milestones and achievements.</p>
+    </div>
+
+    <div class="awards-carousel reveal" data-awards-carousel>
+      <button class="award-nav award-nav-prev" type="button" aria-label="Previous award">←</button>
+      <div class="awards-viewport">
+        <div class="awards-track">
+          {% for award in awards %}
+          <article class="award-slide">
+            <div class="award-slide-image">
+              <img src="{{ gridfs_url(award.image_id, award.updated_at) if award.image_id else url_for('static', filename='assets/awards/award-1.png') }}"
+                   alt="{{ award.image_alt or award.title }}" loading="lazy" decoding="async">
+            </div>
+            <div class="award-slide-content">
+              <span class="award-slide-number">{{ '%02d'|format(loop.index) }}</span>
+              <small>{{ award.category }}{% if award.year %} · {{ award.year }}{% endif %}</small>
+              <h3>{{ award.title }}</h3>
+              <p>{{ award.description }}</p>
+            </div>
+          </article>
+          {% endfor %}
+        </div>
+      </div>
+      <button class="award-nav award-nav-next" type="button" aria-label="Next award">→</button>
+      <div class="award-carousel-footer">
+        <div class="award-dots"></div>
+        <span class="award-counter"><b>01</b> / {{ '%02d'|format(awards|length) }}</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section media-section" id="media">
+  <div class="container">
+    <div class="section-heading reveal">
+      <div>
+        <p class="eyebrow">Media & press</p>
+        <h2>Stories, interviews & coverage.</h2>
+      </div>
+      <p class="section-description">
+        Selected video stories, interviews and milestone coverage featuring Riyas V. A. and Maharani.
+      </p>
+    </div>
+
+    <div class="media-carousel reveal" data-media-carousel>
+      <button class="media-nav media-nav-prev" type="button" aria-label="Previous media item">←</button>
+      <div class="media-viewport">
+        <div class="media-track">
+          {% for item in media_items %}
+          <article class="media-card media-slide">
+            <div class="social-embed-frame {{ item.platform|lower }}-embed">
+              {% if item.platform == 'YouTube' %}
+              <iframe src="{{ item.embed_url }}" title="{{ item.title }}" loading="lazy"
+                frameborder="0" referrerpolicy="strict-origin-when-cross-origin"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                allowfullscreen></iframe>
+              {% elif item.platform == 'Facebook' %}
+              <iframe src="{{ item.embed_url }}" title="{{ item.title }}" loading="lazy"
+                scrolling="no" frameborder="0"
+                allow="autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share"
+                allowfullscreen></iframe>
+              {% elif item.platform == 'Instagram' %}
+              <iframe src="{{ item.embed_url }}" title="{{ item.title }}" loading="lazy"
+                frameborder="0" scrolling="no" allowtransparency="true" allowfullscreen></iframe>
+              {% elif item.image_id %}
+              <a href="{{ item.url }}" target="_blank" rel="noopener">
+                <img src="{{ gridfs_url(item.image_id, item.updated_at) }}" alt="{{ item.title }}" loading="lazy" decoding="async">
+              </a>
+              {% endif %}
+            </div>
+            <small>{{ item.label }} · {{ item.platform }}</small>
+            <h3>{{ item.title }}</h3>
+            <a class="media-link-text" href="{{ item.url }}" target="_blank" rel="noopener">
+              {{ item.cta or 'View story' }} ↗
+            </a>
+          </article>
+          {% endfor %}
+        </div>
+      </div>
+      <button class="media-nav media-nav-next" type="button" aria-label="Next media item">→</button>
+      <div class="media-carousel-footer">
+        <div class="media-dots" aria-label="Media carousel navigation"></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="quote-section">
+  <div class="container quote-wrap reveal">
+    <span>“</span>
+
+    <blockquote>
+      Leadership is not only about scaling a business. It is about building trust, creating opportunity
+      and leaving a positive impact.
+    </blockquote>
+
+    <p>— Riyas V. A.</p>
+  </div>
+</section>
+
+<section class="section contact-section" id="contact">
+  <div class="container contact-grid">
+
+    <div class="reveal">
+      <p class="eyebrow">Connect</p>
+
+      <h2>Business, media & collaboration enquiries.</h2>
+
+      <p class="contact-note">
+        Connect for business, media, events and professional collaborations.
+      </p>
+    </div>
+
+    <div class="contact-list reveal delay-1">
+
+      <a href="mailto:contact@riyasva.com">
+        <span>Email</span>
+        <strong>contact@riyasva.com</strong>
+      </a>
+
+      <a href="#">
+        <span>LinkedIn</span>
+        <strong>Riyas V. A.</strong>
+      </a>
+
+      <a href="#">
+        <span>Instagram</span>
+        <strong>@riyasva</strong>
+      </a>
+
+      <a href="#">
+        <span>Location</span>
+        <strong>Thodupuzha, Kerala, India</strong>
+      </a>
+
+    </div>
+
+  </div>
+</section>
+
+</main>
+
+<footer class="footer">
+  <div class="container footer-inner">
+
+    <div>
+      <strong>Riyas V. A.</strong>
+      <p>Chairman & Managing Director · Atlas–Maharani Group</p>
+    </div>
+
+    <p>© <span id="year"></span> Riyas V. A.</p>
+
+  </div>
+</footer>
+
+<script src="{{ url_for('static', filename='script.js') }}" defer></script>
+
+</body>
+</html>
