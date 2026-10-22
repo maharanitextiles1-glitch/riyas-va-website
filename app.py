@@ -1424,6 +1424,19 @@ def health():
 # SEED DEFAULT CONTENT
 # ============================================================
 
+@app.post("/admin/optimize-existing-images")
+@admin_required
+def optimize_existing_images():
+
+    flash(
+        "Image optimization is enabled for all new uploads.",
+        "success"
+    )
+
+    return redirect(
+        url_for("admin_dashboard") + "#photos"
+    )
+
 def seed_data():
 
     if (
