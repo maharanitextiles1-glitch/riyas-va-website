@@ -1,5 +1,7 @@
 import os
 import re
+import secrets
+import hmac
 from datetime import datetime, timezone
 from functools import wraps
 from urllib.parse import quote
@@ -179,6 +181,47 @@ def allowed_file(filename):
         in ALLOWED_EXTENSIONS
     )
 
+def get_csrf_token():
+    token = session.get("_csrf_token")
+
+    if not token:
+        token = secrets.token_urlsafe(32)
+        session["_csrf_token"] = token
+
+    return token
+
+
+@app.context_processor
+def csrf_context():
+    return {
+        "csrf_token": get_csrf_token
+    }
+
+
+@app.before_request
+def protect_admin_posts():
+    if (
+        request.method == "POST"
+        and request.path.startswith("/admin")
+    ):
+        sent = request.form.get(
+            "_csrf_token",
+            ""
+        )
+
+        expected = session.get(
+            "_csrf_token",
+            ""
+        )
+
+        if (
+            not expected
+            or not hmac.compare_digest(
+                sent,
+                expected
+            )
+        ):
+            abort(400)
 
 def admin_required(view):
     @wraps(view)
