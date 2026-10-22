@@ -23,7 +23,10 @@
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:ital,wght@0,500;0,600;1,500&display=swap" rel="stylesheet">
+  <link rel="preload" as="image" href="{{ photo_url('hero', 'assets/riyas-va.webp') }}" fetchpriority="high">
+  <link rel="preload" href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:ital,wght@0,500;0,600;1,500&display=swap" as="style">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:ital,wght@0,500;0,600;1,500&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+  <noscript><link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:ital,wght@0,500;0,600;1,500&display=swap" rel="stylesheet"></noscript>
 
   <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}" />
   <script type="application/ld+json">
@@ -121,7 +124,7 @@
 
     <div class="hero-visual reveal delay-1">
       <div class="portrait-frame">
-        <img src="{{ photo_url('hero', 'assets/riyas-va.png') }}" alt="Riyas V. A." fetchpriority="high" decoding="async">
+        <img src="{{ photo_url('hero', 'assets/riyas-va.webp') }}" alt="Riyas V. A." fetchpriority="high" decoding="async">
       </div>
 
       <div class="floating-card">
@@ -135,7 +138,7 @@
 
 <section class="section about-section about-overlay-section" id="about">
   <div class="about-overlay-photo" aria-hidden="true">
-    <img src="{{ photo_url('about', 'assets/about-overlay-award.png') }}" alt="" loading="lazy" decoding="async">
+    <img src="{{ photo_url('about', 'assets/about-overlay-award.webp') }}" alt="" loading="lazy" decoding="async">
     <div class="about-overlay-gradient"></div>
   </div>
 
@@ -191,7 +194,7 @@
     <div class="family-feature reveal">
 
       <div class="family-image family-image-clean">
-        <img src="{{ photo_url('family', 'assets/riyas-family.png') }}" alt="Riyas V. A. with family" loading="lazy" decoding="async">
+        <img src="{{ photo_url('family', 'assets/riyas-family.webp') }}" alt="Riyas V. A. with family" loading="lazy" decoding="async">
       </div>
 
       <div class="family-copy">
@@ -243,84 +246,84 @@
 
       <article class="mini-brand-card brand-logo-card">
         <div class="brand-logo-wrap">
-          <img src="{{ photo_url('brand_atless', 'assets/brands/atless-fashion.png') }}" alt="@less Fashion logo" loading="lazy" decoding="async">
+          <img src="{{ photo_url('brand_atless', 'assets/brands/atless-fashion.webp') }}" alt="@less Fashion logo" loading="lazy" decoding="async">
         </div>
         <h3>@less Fashion</h3>
       </article>
 
       <article class="mini-brand-card brand-logo-card">
         <div class="brand-logo-wrap">
-          <img src="{{ photo_url('brand_atlas', 'assets/brands/atlas-fashion.png') }}" alt="Atlas Fashion logo" loading="lazy" decoding="async">
+          <img src="{{ photo_url('brand_atlas', 'assets/brands/atlas-fashion.webp') }}" alt="Atlas Fashion logo" loading="lazy" decoding="async">
         </div>
         <h3>Atlas Fashion</h3>
       </article>
 
       <article class="mini-brand-card brand-logo-card">
         <div class="brand-logo-wrap">
-          <img src="{{ photo_url('brand_megamart', 'assets/brands/megamart.png') }}" alt="Megamart logo" loading="lazy" decoding="async">
+          <img src="{{ photo_url('brand_megamart', 'assets/brands/megamart.webp') }}" alt="Megamart logo" loading="lazy" decoding="async">
         </div>
         <h3>Megamart</h3>
       </article>
 
       <article class="mini-brand-card brand-logo-card">
         <div class="brand-logo-wrap">
-          <img src="{{ photo_url('brand_atless_go', 'assets/brands/atless-go.png') }}" alt="@less GO logo" loading="lazy" decoding="async">
+          <img src="{{ photo_url('brand_atless_go', 'assets/brands/atless-go.webp') }}" alt="@less GO logo" loading="lazy" decoding="async">
         </div>
         <h3>@less GO</h3>
       </article>
 
       <article class="mini-brand-card brand-logo-card">
         <div class="brand-logo-wrap">
-          <img src="{{ photo_url('brand_liza', 'assets/brands/liza-fashions.png') }}" alt="Liza Fashions logo" loading="lazy" decoding="async">
+          <img src="{{ photo_url('brand_liza', 'assets/brands/liza-fashions.webp') }}" alt="Liza Fashions logo" loading="lazy" decoding="async">
         </div>
         <h3>Liza Fashions</h3>
       </article>
 
       <article class="mini-brand-card brand-logo-card">
         <div class="brand-logo-wrap">
-          <img src="{{ photo_url('brand_maharani', 'assets/brands/maharani-wedding-collections.png') }}" alt="Maharani Wedding Collections logo" loading="lazy" decoding="async">
+          <img src="{{ photo_url('brand_maharani', 'assets/brands/maharani-wedding-collections.webp') }}" alt="Maharani Wedding Collections logo" loading="lazy" decoding="async">
         </div>
         <h3>Maharani Wedding Collections</h3>
       </article>
 
       <article class="mini-brand-card brand-logo-card" aria-hidden="true">
         <div class="brand-logo-wrap">
-          <img src="{{ photo_url('brand_atless', 'assets/brands/atless-fashion.png') }}" alt="" loading="lazy" decoding="async">
+          <img src="{{ photo_url('brand_atless', 'assets/brands/atless-fashion.webp') }}" alt="" loading="lazy" decoding="async">
         </div>
         <h3>@less Fashion</h3>
       </article>
 
       <article class="mini-brand-card brand-logo-card" aria-hidden="true">
         <div class="brand-logo-wrap">
-          <img src="{{ photo_url('brand_atlas', 'assets/brands/atlas-fashion.png') }}" alt="" loading="lazy" decoding="async">
+          <img src="{{ photo_url('brand_atlas', 'assets/brands/atlas-fashion.webp') }}" alt="" loading="lazy" decoding="async">
         </div>
         <h3>Atlas Fashion</h3>
       </article>
 
       <article class="mini-brand-card brand-logo-card" aria-hidden="true">
         <div class="brand-logo-wrap">
-          <img src="{{ photo_url('brand_megamart', 'assets/brands/megamart.png') }}" alt="" loading="lazy" decoding="async">
+          <img src="{{ photo_url('brand_megamart', 'assets/brands/megamart.webp') }}" alt="" loading="lazy" decoding="async">
         </div>
         <h3>Megamart</h3>
       </article>
 
       <article class="mini-brand-card brand-logo-card" aria-hidden="true">
         <div class="brand-logo-wrap">
-          <img src="{{ photo_url('brand_atless_go', 'assets/brands/atless-go.png') }}" alt="" loading="lazy" decoding="async">
+          <img src="{{ photo_url('brand_atless_go', 'assets/brands/atless-go.webp') }}" alt="" loading="lazy" decoding="async">
         </div>
         <h3>@less GO</h3>
       </article>
 
       <article class="mini-brand-card brand-logo-card" aria-hidden="true">
         <div class="brand-logo-wrap">
-          <img src="{{ photo_url('brand_liza', 'assets/brands/liza-fashions.png') }}" alt="" loading="lazy" decoding="async">
+          <img src="{{ photo_url('brand_liza', 'assets/brands/liza-fashions.webp') }}" alt="" loading="lazy" decoding="async">
         </div>
         <h3>Liza Fashions</h3>
       </article>
 
       <article class="mini-brand-card brand-logo-card" aria-hidden="true">
         <div class="brand-logo-wrap">
-          <img src="{{ photo_url('brand_maharani', 'assets/brands/maharani-wedding-collections.png') }}" alt="" loading="lazy" decoding="async">
+          <img src="{{ photo_url('brand_maharani', 'assets/brands/maharani-wedding-collections.webp') }}" alt="" loading="lazy" decoding="async">
         </div>
         <h3>Maharani Wedding Collections</h3>
       </article>
@@ -429,7 +432,7 @@
           {% for award in awards %}
           <article class="award-slide">
             <div class="award-slide-image">
-              <img src="{{ gridfs_url(award.image_id, award.updated_at) if award.image_id else url_for('static', filename='assets/awards/award-1.png') }}"
+              <img src="{{ gridfs_url(award.image_id, award.updated_at) if award.image_id else url_for('static', filename='assets/awards/award-1.webp') }}"
                    alt="{{ award.image_alt or award.title }}" loading="lazy" decoding="async">
             </div>
             <div class="award-slide-content">
@@ -469,25 +472,29 @@
         <div class="media-track">
           {% for item in media_items %}
           <article class="media-card media-slide">
-            <div class="social-embed-frame {{ item.platform|lower }}-embed">
-              {% if item.platform == 'YouTube' %}
-              <iframe src="{{ item.embed_url }}" title="{{ item.title }}" loading="lazy"
-                frameborder="0" referrerpolicy="strict-origin-when-cross-origin"
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                allowfullscreen></iframe>
-              {% elif item.platform == 'Facebook' %}
-              <iframe src="{{ item.embed_url }}" title="{{ item.title }}" loading="lazy"
-                scrolling="no" frameborder="0"
-                allow="autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share"
-                allowfullscreen></iframe>
-              {% elif item.platform == 'Instagram' %}
-              <iframe src="{{ item.embed_url }}" title="{{ item.title }}" loading="lazy"
-                frameborder="0" scrolling="no" allowtransparency="true" allowfullscreen></iframe>
+            <div class="social-embed-frame {{ item.platform|lower }}-embed media-lite"
+                 data-platform="{{ item.platform }}"
+                 data-embed-url="{{ item.embed_url }}"
+                 data-title="{{ item.title|e }}">
+              {% if item.platform == 'YouTube' and item.youtube_id %}
+                <img class="media-preview-image"
+                     src="https://i.ytimg.com/vi/{{ item.youtube_id }}/hqdefault.jpg"
+                     alt="{{ item.title }}"
+                     loading="lazy" decoding="async" width="480" height="360">
               {% elif item.image_id %}
-              <a href="{{ item.url }}" target="_blank" rel="noopener">
-                <img src="{{ gridfs_url(item.image_id, item.updated_at) }}" alt="{{ item.title }}" loading="lazy" decoding="async">
-              </a>
+                <img class="media-preview-image"
+                     src="{{ gridfs_url(item.image_id, item.updated_at) }}"
+                     alt="{{ item.title }}"
+                     loading="lazy" decoding="async" width="640" height="480">
+              {% else %}
+                <div class="media-platform-placeholder" aria-hidden="true">
+                  <span>{{ item.platform }}</span>
+                </div>
               {% endif %}
+              <button class="media-load-button" type="button" aria-label="Load {{ item.platform }} preview for {{ item.title }}">
+                <span>▶</span>
+                <strong>Load {{ item.platform }} preview</strong>
+              </button>
             </div>
             <small>{{ item.label }} · {{ item.platform }}</small>
             <h3>{{ item.title }}</h3>
@@ -533,13 +540,7 @@
     </div>
 
     <div class="contact-list reveal delay-1">
-
-      <a href="mailto:contact@riyasva.com">
-        <span>Email</span>
-        <strong>contact@riyasva.com</strong>
-      </a>
-
-      <a href="#">
+<a href="#">
         <span>LinkedIn</span>
         <strong>Riyas V. A.</strong>
       </a>

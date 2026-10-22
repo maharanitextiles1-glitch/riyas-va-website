@@ -1,7 +1,6 @@
 const header = document.querySelector(".site-header");
 const menu = document.querySelector(".menu-toggle");
 const nav = document.querySelector(".nav-links");
-
 window.addEventListener("scroll", () => {
   header.classList.toggle("scrolled", window.scrollY > 24);
 });
@@ -253,4 +252,27 @@ document.querySelectorAll("[data-media-carousel]").forEach(carousel => {
   rebuildDots();
   goTo(0);
   restartAuto();
+});
+
+
+/* Lightweight social embeds: third-party iframe loads only after user action */
+document.querySelectorAll(".media-lite").forEach(frame => {
+  const button = frame.querySelector(".media-load-button");
+  if (!button) return;
+
+  button.addEventListener("click", () => {
+    const src = frame.dataset.embedUrl;
+    const title = frame.dataset.title || "Media preview";
+    if (!src) return;
+
+    const iframe = document.createElement("iframe");
+    iframe.src = src;
+    iframe.title = title;
+    iframe.loading = "lazy";
+    iframe.referrerPolicy = "strict-origin-when-cross-origin";
+    iframe.allow = "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share";
+    iframe.allowFullscreen = true;
+
+    frame.replaceChildren(iframe);
+  }, { once: true });
 });
