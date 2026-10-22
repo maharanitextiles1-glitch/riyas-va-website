@@ -24,6 +24,7 @@ from flask import (
 from flask_compress import Compress
 from gridfs import GridFS
 from pymongo import MongoClient, ASCENDING
+from PIL import Image, ImageOps, UnidentifiedImageError
 from werkzeug.security import check_password_hash
 from werkzeug.utils import secure_filename
 
@@ -43,18 +44,19 @@ app = Flask(__name__)
 
 app.secret_key = os.environ.get(
     "SECRET_KEY",
-    "change-this-in-production"
+    "change-this-in-production",
 )
 
 app.config["MAX_CONTENT_LENGTH"] = 12 * 1024 * 1024
-
 app.config["COMPRESS_LEVEL"] = 6
 
+# Secure admin/session cookies in production.
 app.config["SESSION_COOKIE_HTTPONLY"] = True
 app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
-
-if os.environ.get("SITE_URL", "").startswith("https://"):
-    app.config["SESSION_COOKIE_SECURE"] = True
+app.config["SESSION_COOKIE_SECURE"] = os.environ.get(
+    "SITE_URL",
+    "",
+).startswith("https://")
 
 Compress(app)
 
@@ -65,12 +67,12 @@ Compress(app)
 
 MONGO_URI = os.environ.get(
     "MONGO_URI",
-    "mongodb://localhost:27017/riyasva"
+    "mongodb://localhost:27017/riyasva",
 )
 
 client = MongoClient(
     MONGO_URI,
-    serverSelectionTimeoutMS=5000
+    serverSelectionTimeoutMS=5000,
 )
 
 db = client.get_default_database()
@@ -88,12 +90,12 @@ photos_col = db.site_photos
 
 SITE_URL = os.environ.get(
     "SITE_URL",
-    "https://riyasva.com"
+    "https://riyasva.com",
 ).rstrip("/")
 
 ADMIN_USERNAME = os.environ.get(
     "ADMIN_USERNAME",
-    "admin"
+    "admin",
 )
 
 ADMIN_PASSWORD_HASH = os.environ.get(
@@ -167,7 +169,7 @@ PHOTO_SLOTS = [
 
 
 # ============================================================
-# HELPERS
+# GENERAL HELPERS
 # ============================================================
 
 def utcnow():
@@ -181,6 +183,7 @@ def allowed_file(filename):
         in ALLOWED_EXTENSIONS
     )
 
+
 def get_csrf_token():
     token = session.get("_csrf_token")
 
@@ -193,6 +196,7 @@ def get_csrf_token():
 
 @app.context_processor
 def csrf_context():
+    # Templates use {{ csrf_token() }}
     return {
         "csrf_token": get_csrf_token
     }
@@ -200,42 +204,53 @@ def csrf_context():
 
 @app.before_request
 def protect_admin_posts():
+    """
+    Protect all admin POST forms against CSRF.
+    Existing templates must include:
+    <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
+    """
     if (
         request.method == "POST"
         and request.path.startswith("/admin")
     ):
         sent = request.form.get(
             "_csrf_token",
-            ""
+            "",
         )
 
         expected = session.get(
             "_csrf_token",
-            ""
+            "",
         )
 
         if (
             not expected
             or not hmac.compare_digest(
                 sent,
-                expected
+                expected,
             )
         ):
             abort(400)
+
 
 def admin_required(view):
     @wraps(view)
     def wrapped(*args, **kwargs):
 
-        if not session.get("admin_logged_in"):
+        if not session.get(
+            "admin_logged_in"
+        ):
             return redirect(
                 url_for(
                     "admin_login",
-                    next=request.path
+                    next=request.path,
                 )
             )
 
-        return view(*args, **kwargs)
+        return view(
+            *args,
+            **kwargs,
+        )
 
     return wrapped
 
@@ -245,7 +260,7 @@ def verify_admin_password(password):
     if ADMIN_PASSWORD_HASH:
         return check_password_hash(
             ADMIN_PASSWORD_HASH,
-            password
+            password,
         )
 
     return (
@@ -254,36 +269,193 @@ def verify_admin_password(password):
     )
 
 
-def save_upload(file, old_image_id=None):
+# ============================================================
+# IMAGE OPTIMIZATION
+# ============================================================
 
-    if not file or not file.filename:
+def optimize_image_bytes(
+    file_like,
+    max_dim=1600,
+    quality=80,
+):
+    """
+    Validate an uploaded image, resize large images and convert to WebP.
+
+    Returns:
+        BytesIO containing optimized WebP data.
+    """
+
+    stream = getattr(
+        file_like,
+        "stream",
+        file_like,
+    )
+
+    try:
+        stream.seek(0)
+    except Exception:
+        pass
+
+    try:
+        image = Image.open(stream)
+        image = ImageOps.exif_transpose(
+            image
+        )
+        image.load()
+
+    except (
+        UnidentifiedImageError,
+        OSError,
+        ValueError,
+    ):
+        raise ValueError(
+            "The uploaded file is not a valid image."
+        )
+
+    width, height = image.size
+
+    if (
+        width < 1
+        or height < 1
+    ):
+        raise ValueError(
+            "Invalid image dimensions."
+        )
+
+    # Resize while keeping aspect ratio.
+    scale = min(
+        1.0,
+        max_dim / max(
+            width,
+            height,
+        ),
+    )
+
+    if scale < 1:
+        image = image.resize(
+            (
+                max(
+                    1,
+                    int(
+                        width
+                        * scale
+                    ),
+                ),
+                max(
+                    1,
+                    int(
+                        height
+                        * scale
+                    ),
+                ),
+            ),
+            Image.Resampling.LANCZOS,
+        )
+
+    has_alpha = (
+        image.mode in (
+            "RGBA",
+            "LA",
+        )
+        or "transparency"
+        in image.info
+    )
+
+    image = image.convert(
+        "RGBA"
+        if has_alpha
+        else "RGB"
+    )
+
+    output = BytesIO()
+
+    # Logos/transparency use lossless WebP.
+    if has_alpha:
+        image.save(
+            output,
+            "WEBP",
+            lossless=True,
+            method=6,
+        )
+
+    else:
+        image.save(
+            output,
+            "WEBP",
+            quality=quality,
+            method=6,
+        )
+
+    output.seek(0)
+
+    return output
+
+
+def save_upload(
+    file,
+    old_image_id=None,
+):
+    """
+    Store newly uploaded CMS images as optimized WebP in MongoDB GridFS.
+    """
+
+    if (
+        not file
+        or not file.filename
+    ):
         return old_image_id
 
-    if not allowed_file(file.filename):
+    if not allowed_file(
+        file.filename
+    ):
         raise ValueError(
             "Only PNG, JPG, JPEG, WEBP and GIF images are allowed."
         )
 
-    content_type = (
-        file.mimetype
-        if file.mimetype
-        and file.mimetype.startswith("image/")
-        else "application/octet-stream"
+    optimized = optimize_image_bytes(
+        file,
+        max_dim=1600,
+        quality=80,
+    )
+
+    original_name = secure_filename(
+        file.filename
+    )
+
+    base_name = (
+        original_name.rsplit(
+            ".",
+            1,
+        )[0]
+        if "." in original_name
+        else original_name
+    )
+
+    base_name = (
+        base_name
+        or "image"
+    )
+
+    filename = (
+        f"{base_name}.webp"
     )
 
     new_id = fs.put(
-        file.stream,
-        filename=secure_filename(file.filename),
-        content_type=content_type,
+        optimized,
+        filename=filename,
+        content_type="image/webp",
         uploadDate=utcnow(),
     )
 
+    # Delete the old GridFS image only after the new one saved successfully.
     if old_image_id:
 
         try:
             fs.delete(
                 ObjectId(
-                    str(old_image_id)
+                    str(
+                        old_image_id
+                    )
                 )
             )
 
@@ -293,8 +465,92 @@ def save_upload(file, old_image_id=None):
     return new_id
 
 
+def optimize_existing_gridfs_image(
+    image_id,
+):
+    """
+    Recompress an already stored GridFS image.
+
+    Returns:
+        (new_id, changed)
+    """
+
+    if not image_id:
+        return (
+            image_id,
+            False,
+        )
+
+    try:
+        object_id = ObjectId(
+            str(
+                image_id
+            )
+        )
+
+        old_file = fs.get(
+            object_id
+        )
+
+        raw_bytes = old_file.read()
+
+        if not raw_bytes:
+            return (
+                image_id,
+                False,
+            )
+
+        input_stream = BytesIO(
+            raw_bytes
+        )
+
+        optimized = optimize_image_bytes(
+            input_stream,
+            max_dim=1600,
+            quality=80,
+        )
+
+        old_name = (
+            old_file.filename
+            or "image"
+        )
+
+        base_name = secure_filename(
+            old_name.rsplit(
+                ".",
+                1,
+            )[0]
+        ) or "image"
+
+        new_id = fs.put(
+            optimized,
+            filename=(
+                f"{base_name}.webp"
+            ),
+            content_type="image/webp",
+            uploadDate=utcnow(),
+        )
+
+        # Only delete old image once new GridFS object exists.
+        fs.delete(
+            object_id
+        )
+
+        return (
+            new_id,
+            True,
+        )
+
+    except Exception:
+        # Leave original image untouched on failure.
+        return (
+            image_id,
+            False,
+        )
+
+
 # ============================================================
-# SOCIAL URL HELPERS
+# SOCIAL MEDIA HELPERS
 # ============================================================
 
 def youtube_id(url):
@@ -331,36 +587,39 @@ def instagram_code(url):
     )
 
 
-def make_embed(platform, url):
+def make_embed(
+    platform,
+    url,
+):
 
     platform = (
-        platform or ""
+        platform
+        or ""
     ).strip()
 
     if platform == "YouTube":
 
-        video_id = youtube_id(url)
+        video_id = youtube_id(
+            url
+        )
 
-        if video_id:
-            return (
-                "https://www.youtube.com/embed/"
-                + video_id
-            )
-
-        return ""
+        return (
+            f"https://www.youtube.com/embed/{video_id}"
+            if video_id
+            else ""
+        )
 
     if platform == "Instagram":
 
-        code = instagram_code(url)
+        code = instagram_code(
+            url
+        )
 
-        if code:
-            return (
-                "https://www.instagram.com/reel/"
-                + code
-                + "/embed/"
-            )
-
-        return ""
+        return (
+            f"https://www.instagram.com/reel/{code}/embed/"
+            if code
+            else ""
+        )
 
     if platform == "Facebook":
 
@@ -369,7 +628,7 @@ def make_embed(platform, url):
             "video.php?href="
             + quote(
                 url,
-                safe=""
+                safe="",
             )
             + "&show_text=false&width=560"
         )
@@ -386,7 +645,7 @@ def template_helpers():
 
     def gridfs_url(
         image_id,
-        version=None
+        version=None,
     ):
 
         if not image_id:
@@ -398,7 +657,12 @@ def template_helpers():
 
             try:
                 suffix = (
-                    f"?v={int(version.timestamp())}"
+                    "?v="
+                    + str(
+                        int(
+                            version.timestamp()
+                        )
+                    )
                 )
 
             except Exception:
@@ -407,7 +671,9 @@ def template_helpers():
         return (
             url_for(
                 "image_file",
-                file_id=str(image_id)
+                file_id=str(
+                    image_id
+                ),
             )
             + suffix
         )
@@ -415,32 +681,44 @@ def template_helpers():
 
     def photo_url(
         key,
-        fallback
+        fallback,
     ):
 
         row = photos_col.find_one(
-            {"key": key}
+            {
+                "key":
+                    key
+            }
         )
 
         if (
             row
-            and row.get("image_id")
+            and row.get(
+                "image_id"
+            )
         ):
 
             return gridfs_url(
-                row["image_id"],
-                row.get("updated_at")
+                row[
+                    "image_id"
+                ],
+                row.get(
+                    "updated_at"
+                ),
             )
 
         return url_for(
             "static",
-            filename=fallback
+            filename=fallback,
         )
 
 
     return {
-        "gridfs_url": gridfs_url,
-        "photo_url": photo_url,
+        "gridfs_url":
+            gridfs_url,
+
+        "photo_url":
+            photo_url,
     }
 
 
@@ -449,7 +727,9 @@ def template_helpers():
 # ============================================================
 
 @app.after_request
-def security_and_cache_headers(response):
+def security_and_cache_headers(
+    response
+):
 
     response.headers[
         "X-Content-Type-Options"
@@ -461,7 +741,9 @@ def security_and_cache_headers(response):
 
     response.headers[
         "Referrer-Policy"
-    ] = "strict-origin-when-cross-origin"
+    ] = (
+        "strict-origin-when-cross-origin"
+    )
 
     response.headers[
         "Permissions-Policy"
@@ -470,6 +752,15 @@ def security_and_cache_headers(response):
         "microphone=(), "
         "geolocation=()"
     )
+
+    if request.is_secure:
+
+        response.headers[
+            "Strict-Transport-Security"
+        ] = (
+            "max-age=31536000; "
+            "includeSubDomains"
+        )
 
     if request.path.startswith(
         "/static/"
@@ -503,10 +794,10 @@ def security_and_cache_headers(response):
             "Cache-Control"
         ] = "no-store"
 
-    elif request.path in [
+    elif request.path in (
         "/robots.txt",
         "/sitemap.xml",
-    ]:
+    ):
 
         response.headers[
             "Cache-Control"
@@ -519,7 +810,7 @@ def security_and_cache_headers(response):
 
         response.headers.setdefault(
             "Cache-Control",
-            "public, max-age=300"
+            "public, max-age=300",
         )
 
     return response
@@ -535,19 +826,21 @@ def home():
     awards = list(
         awards_col.find(
             {
-                "published": {
-                    "$ne": False
-                }
+                "published":
+                    {
+                        "$ne":
+                            False
+                    }
             }
         ).sort(
             [
                 (
                     "sort_order",
-                    ASCENDING
+                    ASCENDING,
                 ),
                 (
                     "created_at",
-                    ASCENDING
+                    ASCENDING,
                 ),
             ]
         )
@@ -556,23 +849,51 @@ def home():
     media_items = list(
         media_col.find(
             {
-                "published": {
-                    "$ne": False
-                }
+                "published":
+                    {
+                        "$ne":
+                            False
+                    }
             }
         ).sort(
             [
                 (
                     "sort_order",
-                    ASCENDING
+                    ASCENDING,
                 ),
                 (
                     "created_at",
-                    ASCENDING
+                    ASCENDING,
                 ),
             ]
         )
     )
+
+    # Used by lightweight YouTube thumbnail templates.
+    for item in media_items:
+
+        if (
+            item.get(
+                "platform"
+            )
+            == "YouTube"
+        ):
+
+            item[
+                "youtube_id"
+            ] = youtube_id(
+                item.get(
+                    "url",
+                    "",
+                )
+            )
+
+        else:
+
+            item[
+                "youtube_id"
+            ] = None
+
 
     seo = {
 
@@ -580,16 +901,27 @@ def home():
             "Riyas V. A. | Chairman & Managing Director, Atlas–Maharani Group",
 
         "description":
-            "Official website of Riyas V. A., Chairman & Managing Director of the Atlas–Maharani Group. Explore his leadership journey, business portfolio, awards and media coverage.",
+            (
+                "Official website of Riyas V. A., "
+                "Chairman & Managing Director of the "
+                "Atlas–Maharani Group. Explore his "
+                "leadership journey, business portfolio, "
+                "awards and media coverage."
+            ),
 
         "canonical":
             SITE_URL + "/",
 
         "og_image":
-            SITE_URL
-            + url_for(
-                "static",
-                filename="assets/riyas-va.png"
+            (
+                SITE_URL
+                + url_for(
+                    "static",
+                    filename=(
+                        "assets/"
+                        "riyas-va.png"
+                    ),
+                )
             ),
     }
 
@@ -608,12 +940,16 @@ def home():
 @app.route(
     "/media/image/<file_id>"
 )
-def image_file(file_id):
+def image_file(
+    file_id
+):
 
     try:
 
         grid_file = fs.get(
-            ObjectId(file_id)
+            ObjectId(
+                file_id
+            )
         )
 
     except Exception:
@@ -628,7 +964,8 @@ def image_file(file_id):
 
         mimetype=(
             grid_file.content_type
-            or "application/octet-stream"
+            or
+            "application/octet-stream"
         ),
 
         download_name=(
@@ -645,7 +982,9 @@ def image_file(file_id):
 # ROBOTS.TXT
 # ============================================================
 
-@app.route("/robots.txt")
+@app.route(
+    "/robots.txt"
+)
 def robots():
 
     content = (
@@ -659,7 +998,8 @@ def robots():
         content,
         status=200,
         content_type=(
-            "text/plain; charset=utf-8"
+            "text/plain; "
+            "charset=utf-8"
         ),
     )
 
@@ -668,26 +1008,67 @@ def robots():
 # SITEMAP.XML
 # ============================================================
 
-@app.route("/sitemap.xml")
+@app.route(
+    "/sitemap.xml"
+)
 def sitemap():
 
-    xml = f"""<?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-  <url>
-    <loc>{SITE_URL}/</loc>
-    <changefreq>weekly</changefreq>
-    <priority>1.0</priority>
-  </url>
-</urlset>
-"""
+    xml = (
+        '<?xml version="1.0" '
+        'encoding="UTF-8"?>\n'
+        '<urlset '
+        'xmlns="http://www.sitemaps.org/'
+        'schemas/sitemap/0.9">\n'
+        "  <url>\n"
+        f"    <loc>{SITE_URL}/</loc>\n"
+        "    <changefreq>weekly</changefreq>\n"
+        "    <priority>1.0</priority>\n"
+        "  </url>\n"
+        "</urlset>\n"
+    )
 
     return Response(
         xml,
         status=200,
         content_type=(
-            "application/xml; charset=utf-8"
+            "application/xml; "
+            "charset=utf-8"
         ),
     )
+
+
+# ============================================================
+# HEALTH CHECK
+# ============================================================
+
+@app.route(
+    "/health"
+)
+def health():
+
+    try:
+
+        client.admin.command(
+            "ping"
+        )
+
+        return {
+            "status":
+                "ok",
+
+            "database":
+                "connected",
+        }, 200
+
+    except Exception:
+
+        return {
+            "status":
+                "error",
+
+            "database":
+                "unavailable",
+        }, 503
 
 
 # ============================================================
@@ -705,19 +1086,24 @@ def admin_login():
 
     if request.method == "POST":
 
-        username = request.form.get(
-            "username"
+        username = (
+            request.form.get(
+                "username",
+                "",
+            )
+            .strip()
         )
 
         password = request.form.get(
             "password",
-            ""
+            "",
         )
 
         if (
             username
             == ADMIN_USERNAME
-            and verify_admin_password(
+            and
+            verify_admin_password(
                 password
             )
         ):
@@ -727,6 +1113,10 @@ def admin_login():
             session[
                 "admin_logged_in"
             ] = True
+
+            # Generate fresh CSRF token
+            # after authentication.
+            get_csrf_token()
 
             return redirect(
                 url_for(
@@ -748,7 +1138,9 @@ def admin_login():
 # ADMIN LOGOUT
 # ============================================================
 
-@app.route("/admin/logout")
+@app.route(
+    "/admin/logout"
+)
 def admin_logout():
 
     session.clear()
@@ -764,7 +1156,9 @@ def admin_logout():
 # ADMIN DASHBOARD
 # ============================================================
 
-@app.route("/admin")
+@app.route(
+    "/admin"
+)
 @admin_required
 def admin_dashboard():
 
@@ -773,11 +1167,11 @@ def admin_dashboard():
             [
                 (
                     "sort_order",
-                    ASCENDING
+                    ASCENDING,
                 ),
                 (
                     "created_at",
-                    ASCENDING
+                    ASCENDING,
                 ),
             ]
         )
@@ -788,48 +1182,52 @@ def admin_dashboard():
             [
                 (
                     "sort_order",
-                    ASCENDING
+                    ASCENDING,
                 ),
                 (
                     "created_at",
-                    ASCENDING
+                    ASCENDING,
                 ),
             ]
         )
     )
 
     photos = {
-        photo["key"]: photo
+        photo[
+            "key"
+        ]:
+            photo
+
         for photo
         in photos_col.find()
     }
 
     return render_template(
-
         "admin.html",
-
         awards=awards,
-
         media_items=media_items,
-
         photos=photos,
-
         photo_slots=PHOTO_SLOTS,
     )
 
 
 # ============================================================
-# UPDATE WEBSITE PHOTO
+# UPDATE WEBSITE PHOTO / LOGO
 # ============================================================
 
 @app.post(
     "/admin/photo/<key>"
 )
 @admin_required
-def admin_photo_update(key):
+def admin_photo_update(
+    key
+):
 
     valid_keys = {
-        item[0]
+        item[
+            0
+        ]
+
         for item
         in PHOTO_SLOTS
     }
@@ -838,7 +1236,10 @@ def admin_photo_update(key):
         abort(404)
 
     row = photos_col.find_one(
-        {"key": key}
+        {
+            "key":
+                key
+        }
     )
 
     try:
@@ -850,7 +1251,9 @@ def admin_photo_update(key):
             ),
 
             (
-                row.get("image_id")
+                row.get(
+                    "image_id"
+                )
                 if row
                 else None
             ),
@@ -859,7 +1262,9 @@ def admin_photo_update(key):
     except ValueError as error:
 
         flash(
-            str(error),
+            str(
+                error
+            ),
             "error",
         )
 
@@ -875,30 +1280,217 @@ def admin_photo_update(key):
         photos_col.update_one(
 
             {
-                "key": key
+                "key":
+                    key
             },
 
             {
-                "$set": {
+                "$set":
+                    {
+                        "key":
+                            key,
 
-                    "key":
-                        key,
+                        "image_id":
+                            image_id,
 
-                    "image_id":
-                        image_id,
-
-                    "updated_at":
-                        utcnow(),
-                }
+                        "updated_at":
+                            utcnow(),
+                    }
             },
 
             upsert=True,
         )
 
         flash(
-            "Photo updated.",
+            "Photo updated and optimized.",
             "success",
         )
+
+    return redirect(
+        url_for(
+            "admin_dashboard"
+        )
+        + "#photos"
+    )
+
+
+# ============================================================
+# OPTIMIZE EXISTING CMS IMAGES
+# ============================================================
+
+@app.post(
+    "/admin/optimize-existing-images"
+)
+@admin_required
+def optimize_existing_images():
+
+    updated = 0
+    skipped = 0
+
+    # ----------------------------------
+    # Site photos / logos
+    # ----------------------------------
+
+    for row in photos_col.find(
+        {
+            "image_id":
+                {
+                    "$exists":
+                        True
+                }
+        }
+    ):
+
+        old_id = row.get(
+            "image_id"
+        )
+
+        new_id, changed = (
+            optimize_existing_gridfs_image(
+                old_id
+            )
+        )
+
+        if changed:
+
+            photos_col.update_one(
+
+                {
+                    "_id":
+                        row["_id"]
+                },
+
+                {
+                    "$set":
+                        {
+                            "image_id":
+                                new_id,
+
+                            "updated_at":
+                                utcnow(),
+                        }
+                },
+            )
+
+            updated += 1
+
+        else:
+
+            skipped += 1
+
+
+    # ----------------------------------
+    # Awards
+    # ----------------------------------
+
+    for row in awards_col.find(
+        {
+            "image_id":
+                {
+                    "$exists":
+                        True
+                }
+        }
+    ):
+
+        old_id = row.get(
+            "image_id"
+        )
+
+        new_id, changed = (
+            optimize_existing_gridfs_image(
+                old_id
+            )
+        )
+
+        if changed:
+
+            awards_col.update_one(
+
+                {
+                    "_id":
+                        row["_id"]
+                },
+
+                {
+                    "$set":
+                        {
+                            "image_id":
+                                new_id,
+
+                            "updated_at":
+                                utcnow(),
+                        }
+                },
+            )
+
+            updated += 1
+
+        else:
+
+            skipped += 1
+
+
+    # ----------------------------------
+    # Media custom images
+    # ----------------------------------
+
+    for row in media_col.find(
+        {
+            "image_id":
+                {
+                    "$exists":
+                        True
+                }
+        }
+    ):
+
+        old_id = row.get(
+            "image_id"
+        )
+
+        new_id, changed = (
+            optimize_existing_gridfs_image(
+                old_id
+            )
+        )
+
+        if changed:
+
+            media_col.update_one(
+
+                {
+                    "_id":
+                        row["_id"]
+                },
+
+                {
+                    "$set":
+                        {
+                            "image_id":
+                                new_id,
+
+                            "updated_at":
+                                utcnow(),
+                        }
+                },
+            )
+
+            updated += 1
+
+        else:
+
+            skipped += 1
+
+
+    flash(
+        (
+            f"Optimized {updated} existing "
+            f"CMS image(s). "
+            f"{skipped} image(s) were skipped."
+        ),
+        "success",
+    )
 
     return redirect(
         url_for(
@@ -941,6 +1533,7 @@ def award_save():
 
             abort(400)
 
+
     try:
 
         image_id = save_upload(
@@ -950,7 +1543,9 @@ def award_save():
             ),
 
             (
-                old.get("image_id")
+                old.get(
+                    "image_id"
+                )
                 if old
                 else None
             ),
@@ -959,7 +1554,9 @@ def award_save():
     except ValueError as error:
 
         flash(
-            str(error),
+            str(
+                error
+            ),
             "error",
         )
 
@@ -969,6 +1566,7 @@ def award_save():
             )
             + "#awards"
         )
+
 
     try:
 
@@ -983,50 +1581,54 @@ def award_save():
 
         sort_order = 0
 
+
     doc = {
 
         "title":
             request.form.get(
                 "title",
-                ""
+                "",
             ).strip(),
 
         "category":
             request.form.get(
                 "category",
-                ""
+                "",
             ).strip(),
 
         "year":
             request.form.get(
                 "year",
-                ""
+                "",
             ).strip(),
 
         "description":
             request.form.get(
                 "description",
-                ""
+                "",
             ).strip(),
 
         "image_alt":
             request.form.get(
                 "image_alt",
-                ""
+                "",
             ).strip(),
 
         "sort_order":
             sort_order,
 
         "published":
-            request.form.get(
-                "published"
-            )
-            == "on",
+            (
+                request.form.get(
+                    "published"
+                )
+                == "on"
+            ),
 
         "updated_at":
             utcnow(),
     }
+
 
     if image_id:
 
@@ -1034,13 +1636,16 @@ def award_save():
             "image_id"
         ] = image_id
 
+
     if old:
 
         awards_col.update_one(
 
             {
                 "_id":
-                    old["_id"]
+                    old[
+                        "_id"
+                    ]
             },
 
             {
@@ -1069,6 +1674,7 @@ def award_save():
             "success",
         )
 
+
     return redirect(
         url_for(
             "admin_dashboard"
@@ -1085,7 +1691,9 @@ def award_save():
     "/admin/award/<item_id>/delete"
 )
 @admin_required
-def award_delete(item_id):
+def award_delete(
+    item_id
+):
 
     try:
 
@@ -1097,12 +1705,14 @@ def award_delete(item_id):
 
         abort(400)
 
+
     row = awards_col.find_one(
         {
             "_id":
                 object_id
         }
     )
+
 
     if row:
 
@@ -1126,12 +1736,16 @@ def award_delete(item_id):
 
                 pass
 
+
         awards_col.delete_one(
             {
                 "_id":
-                    row["_id"]
+                    row[
+                        "_id"
+                    ]
             }
         )
+
 
     flash(
         "Award deleted.",
@@ -1179,15 +1793,18 @@ def media_save():
 
             abort(400)
 
+
     platform = request.form.get(
         "platform",
-        "YouTube"
+        "YouTube",
     ).strip()
+
 
     url = request.form.get(
         "url",
-        ""
+        "",
     ).strip()
+
 
     try:
 
@@ -1198,7 +1815,9 @@ def media_save():
             ),
 
             (
-                old.get("image_id")
+                old.get(
+                    "image_id"
+                )
                 if old
                 else None
             ),
@@ -1207,7 +1826,9 @@ def media_save():
     except ValueError as error:
 
         flash(
-            str(error),
+            str(
+                error
+            ),
             "error",
         )
 
@@ -1217,6 +1838,7 @@ def media_save():
             )
             + "#media"
         )
+
 
     try:
 
@@ -1231,6 +1853,7 @@ def media_save():
 
         sort_order = 0
 
+
     doc = {
 
         "platform":
@@ -1242,39 +1865,42 @@ def media_save():
         "embed_url":
             make_embed(
                 platform,
-                url
+                url,
             ),
 
         "label":
             request.form.get(
                 "label",
-                ""
+                "",
             ).strip(),
 
         "title":
             request.form.get(
                 "title",
-                ""
+                "",
             ).strip(),
 
         "cta":
             request.form.get(
                 "cta",
-                ""
+                "",
             ).strip(),
 
         "sort_order":
             sort_order,
 
         "published":
-            request.form.get(
-                "published"
-            )
-            == "on",
+            (
+                request.form.get(
+                    "published"
+                )
+                == "on"
+            ),
 
         "updated_at":
             utcnow(),
     }
+
 
     if image_id:
 
@@ -1282,13 +1908,16 @@ def media_save():
             "image_id"
         ] = image_id
 
+
     if old:
 
         media_col.update_one(
 
             {
                 "_id":
-                    old["_id"]
+                    old[
+                        "_id"
+                    ]
             },
 
             {
@@ -1317,6 +1946,7 @@ def media_save():
             "success",
         )
 
+
     return redirect(
         url_for(
             "admin_dashboard"
@@ -1333,7 +1963,9 @@ def media_save():
     "/admin/media/<item_id>/delete"
 )
 @admin_required
-def media_delete(item_id):
+def media_delete(
+    item_id
+):
 
     try:
 
@@ -1345,12 +1977,14 @@ def media_delete(item_id):
 
         abort(400)
 
+
     row = media_col.find_one(
         {
             "_id":
                 object_id
         }
     )
+
 
     if row:
 
@@ -1374,12 +2008,16 @@ def media_delete(item_id):
 
                 pass
 
+
         media_col.delete_one(
             {
                 "_id":
-                    row["_id"]
+                    row[
+                        "_id"
+                    ]
             }
         )
+
 
     flash(
         "Media item deleted.",
@@ -1395,47 +2033,8 @@ def media_delete(item_id):
 
 
 # ============================================================
-# HEALTH CHECK
-# ============================================================
-
-@app.route("/health")
-def health():
-
-    try:
-
-        client.admin.command(
-            "ping"
-        )
-
-        return {
-            "status": "ok",
-            "database": "connected",
-        }, 200
-
-    except Exception:
-
-        return {
-            "status": "error",
-            "database": "unavailable",
-        }, 503
-
-
-# ============================================================
 # SEED DEFAULT CONTENT
 # ============================================================
-
-@app.post("/admin/optimize-existing-images")
-@admin_required
-def optimize_existing_images():
-
-    flash(
-        "Image optimization is enabled for all new uploads.",
-        "success"
-    )
-
-    return redirect(
-        url_for("admin_dashboard") + "#photos"
-    )
 
 def seed_data():
 
@@ -1452,7 +2051,12 @@ def seed_data():
                 "URF World Record",
                 "World Record Achievement",
                 "2026",
-                "Maharani Wedding Collections achieved a URF World Record through the Saree Athapookkalam initiative.",
+                (
+                    "Maharani Wedding Collections "
+                    "achieved a URF World Record "
+                    "through the Saree "
+                    "Athapookkalam initiative."
+                ),
                 1,
             ),
 
@@ -1460,7 +2064,11 @@ def seed_data():
                 "Times Business Award 2026",
                 "Business Recognition",
                 "2026",
-                "Riyas V. A. was recognized at the Times Business Awards 2026.",
+                (
+                    "Riyas V. A. was recognized "
+                    "at the Times Business Awards "
+                    "2026."
+                ),
                 2,
             ),
 
@@ -1468,10 +2076,15 @@ def seed_data():
                 "Businessman of the Year 2025",
                 "Business Achievement",
                 "2025",
-                "Riyas V. A. was recognized as Businessman of the Year 2025.",
+                (
+                    "Riyas V. A. was recognized "
+                    "as Businessman of the Year "
+                    "2025."
+                ),
                 3,
             ),
         ]
+
 
         for (
             title,
@@ -1523,7 +2136,10 @@ def seed_data():
 
             (
                 "YouTube",
-                "https://www.youtube.com/watch?v=qVNw9WHxtrU",
+                (
+                    "https://www.youtube.com/"
+                    "watch?v=qVNw9WHxtrU"
+                ),
                 "Featured Video",
                 "Riyas V. A. — Featured Video",
                 "Watch on YouTube",
@@ -1532,31 +2148,61 @@ def seed_data():
 
             (
                 "Facebook",
-                "https://www.facebook.com/MaharaniWeddingCollections/videos/riyas-va-about-the-heart-of-maharani-our-peoplemore-than-a-workplace-its-a-space/4425333791029175/",
+                (
+                    "https://www.facebook.com/"
+                    "MaharaniWeddingCollections/"
+                    "videos/"
+                    "riyas-va-about-the-heart-of-"
+                    "maharani-our-peoplemore-than-"
+                    "a-workplace-its-a-space/"
+                    "4425333791029175/"
+                ),
                 "People & Culture",
-                "Riyas V. A. about the heart of Maharani — our people",
+                (
+                    "Riyas V. A. about the heart "
+                    "of Maharani — our people"
+                ),
                 "Watch on Facebook",
                 2,
             ),
 
             (
                 "Instagram",
-                "https://www.instagram.com/reel/DIXuNQUSC2f/?hl=en",
+                (
+                    "https://www.instagram.com/"
+                    "reel/DIXuNQUSC2f/?hl=en"
+                ),
                 "Milestone",
-                "Celebrating a proud milestone for Maharani Wedding Collections",
+                (
+                    "Celebrating a proud milestone "
+                    "for Maharani Wedding Collections"
+                ),
                 "Watch on Instagram",
                 3,
             ),
 
             (
                 "Facebook",
-                "https://www.facebook.com/MaharaniWeddingCollections/videos/behind-every-rush-every-celebration-and-every-milestone-at-maharani-stands-one-m/28455204714103662/",
+                (
+                    "https://www.facebook.com/"
+                    "MaharaniWeddingCollections/"
+                    "videos/"
+                    "behind-every-rush-every-"
+                    "celebration-and-every-"
+                    "milestone-at-maharani-stands-"
+                    "one-m/28455204714103662/"
+                ),
                 "Leadership",
-                "Behind every rush, every celebration and every milestone at Maharani",
+                (
+                    "Behind every rush, every "
+                    "celebration and every milestone "
+                    "at Maharani"
+                ),
                 "Watch on Facebook",
                 4,
             ),
         ]
+
 
         for (
             platform,
@@ -1578,7 +2224,7 @@ def seed_data():
                 "embed_url":
                     make_embed(
                         platform,
-                        url
+                        url,
                     ),
 
                 "label":
@@ -1619,7 +2265,7 @@ if __name__ == "__main__":
         port=int(
             os.environ.get(
                 "PORT",
-                5000
+                5000,
             )
         ),
 
