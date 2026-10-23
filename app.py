@@ -794,10 +794,17 @@ def security_and_cache_headers(
             "Cache-Control"
         ] = "no-store"
 
-    elif request.path in (
-        "/robots.txt",
-        "/sitemap.xml",
-    ):
+    elif request.path == "/robots.txt":
+
+        response.headers[
+            "Cache-Control"
+        ] = (
+            "no-cache, "
+            "no-store, "
+            "must-revalidate"
+        )
+
+    elif request.path == "/sitemap.xml":
 
         response.headers[
             "Cache-Control"
@@ -988,13 +995,16 @@ def image_file(
 def robots():
 
     content = (
+        "User-agent: Googlebot\n"
+        "Allow: /\n"
+        "\n"
         "User-agent: *\n"
         "Allow: /\n"
         "Disallow: /admin/\n"
         f"Sitemap: {SITE_URL}/sitemap.xml\n"
     )
 
-    return Response(
+    response = Response(
         content,
         status=200,
         content_type=(
@@ -1002,6 +1012,16 @@ def robots():
             "charset=utf-8"
         ),
     )
+
+    response.headers[
+        "Cache-Control"
+    ] = (
+        "no-cache, "
+        "no-store, "
+        "must-revalidate"
+    )
+
+    return response
 
 
 # ============================================================
